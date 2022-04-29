@@ -5,16 +5,20 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import React from 'react';
 import coffeeStoreData from '../../data/coffee-stores.json';
+import { fetchCofeeStore } from '../../lib/coffee-stores';
 
 import styles from '../../styles/coffee-store.module.css';
 
-export function getStaticProps(staticProps) {
+export async function getStaticProps(staticProps) {
     const params = staticProps.params;
+    console.log(params, "params_data")
+    const coffeestores = await fetchCofeeStore();
+
 
     return {
         props: {
-            CoffeeStore: coffeeStoreData.find(coffeeStore => {
-                return coffeeStore.id.toString() === params.id;
+            CoffeeStore: coffeestores.find(coffeeStore => {
+                return coffeeStore.fsq_id === params.id;
             })
 
 
@@ -22,11 +26,13 @@ export function getStaticProps(staticProps) {
     }
 }
 
-export function getStaticPaths(props) {
-    const paths = coffeeStoreData.map((coffeeStore) => {
+export async function getStaticPaths(props) {
+    const coffeestores = await fetchCofeeStore();
+
+    const paths = await coffeestores.map((coffeeStore) => {
         return {
             params: {
-                id: coffeeStore.id.toString()
+                id: coffeeStore.fsq_id
             },
         };
     })
@@ -44,7 +50,7 @@ const CoffeeStore = (props) => {
     if (router.isFallback) {
         return <div>Loading...</div>
     }
-    const { address, name, neighbourhood, imgUrl } = props.CoffeeStore;
+    const { location, name, neighbourhood, imgUrl } = props.CoffeeStore;
 
     const handuleUpvoteButton = () => [
         console.log("upVote Button")
@@ -62,7 +68,7 @@ const CoffeeStore = (props) => {
                     <div className={styles.nameWrapper}>
                         <h1 className={styles.name}>{name}</h1>
                     </div>
-                    <Image src={imgUrl}
+                    <Image src={imgUrl || "https://images.unsplash.com/photo-1498804103079-a6351b050096?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=2468&q=80"}
                         width={600}
                         height={360}
                         alt={name}
@@ -73,13 +79,13 @@ const CoffeeStore = (props) => {
                     <div className={styles.iconWrapper}>
                         <Image src="/statics/icons/places.svg" width={24} height={24}
                         />
-                        <p className={styles.text}> {address}</p>
+                        <p className={styles.text}> {location.address}</p>
                     </div>
-                    <div className={styles.iconWrapper}>
+                    {location.neighbourhood && <div className={styles.iconWrapper}>
                         <Image src="/statics/icons/near-me.svg" width={24} height={24}
                         />
-                        <p className={styles.text}> {neighbourhood}</p>
-                    </div>
+                        <p className={styles.text}> {location.neighbourhood}</p>
+                    </div>}
                     <div className={styles.iconWrapper}>
                         <Image src="/statics/icons/star.svg" width={24} height={24}
                         />
